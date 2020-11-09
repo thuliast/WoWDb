@@ -6,9 +6,11 @@ Author: thuliast
 Creation Date: 18-12-2019
 """
 
-VERSION = "0.4"
+VERSION = "0.5a"
 import sqlite3
 import sys
+from prettytable import from_db_cursor
+from prettytable import PrettyTable
 
 print("------------------------------------------")
 print("|                                        |")
@@ -32,38 +34,32 @@ class encyclopedia(object):
         except sqlite3.Error as error:
             print("Connection Error. " + error)
 
-    def print_header(self):
-        #A small function to print line separator
-        print("-" * 80)
-        print("%5s | %50s | %5s | %5s" % ("ID.","Description","Item Lvl","Req.Lvl"))
-        print("-" * 80)
-        
-        
+            
     def db_search(self,item_to_search):
-        counter = 0
         self.item_to_search = item_to_search
+        self.cur = self.con.cursor()
         self.cur.execute("SELECT entry, name, itemlevel, requiredlevel \
 FROM item_list WHERE name LIKE ? ORDER BY entry",('%{}%'.format(self.item_to_search),))        
-        result = self.cur.fetchall()
-        self.print_header()
+        self.tb = from_db_cursor(self.cur)
+        print(self.tb.get_string(title="List of Items found"))
         
-        if result is None:
-            print("No record(s) match your request.")
-            main()
-        else:
-            for element in result:
-                print("%5s | %50s | %8s | %5s" % (element[0],element[1],element[2],element[3]))
-                counter += 1
-
         print("-" * 80)
-        print("Number of elements found: " ,str(counter))
-
+        self.choice = input("Another search(y) or quit(n)? :")
+        self.choice = self.choice.lower()
+        if self.choice == "n":
+            print("Have a nice day")
+            self.on_exit()
+        elif self.choice == "y":
+            main()
+        else :
+            print("Unrecognized choice. Quit to Main")
+            main()
     
+
     def on_exit(self):    
         self.cur.close()
         self.con.close()
         sys.exit()
-
 
 
 def main():
@@ -75,12 +71,7 @@ def main():
         if item != "":
             e.db_search(item)
         print("\n")
-        choice = input("Another search(y) or quit(n)? :")
-        choice = choice.lower()
-    if choice == "n":
-        print("Have a nice day")
-        e.on_exit()
-
-
+        
+        
 if __name__=="__main__":
     main()
